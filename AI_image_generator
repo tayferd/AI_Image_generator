@@ -1,0 +1,60 @@
+import tkinter as tk
+import requests
+import json
+
+class OpenAIImageGeneratorApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("OpenAI Image Generator")
+
+        self.prompt_label = tk.Label(master, text="Enter a prompt:")
+        self.prompt_label.pack()
+
+        self.prompt_entry = tk.Entry(master)
+        self.prompt_entry.pack()
+
+        self.size_label = tk.Label(master, text="Enter image size (e.g. 512x512):")
+        self.size_label.pack()
+
+        self.size_entry = tk.Entry(master)
+        self.size_entry.pack(anchor="center")
+        self.size_entry.insert(0, "512x512")
+
+        self.generate_button = tk.Button(master, text="Generate Image", command=self.generate_image)
+        self.generate_button.pack()
+
+        self.image_canvas = tk.Canvas(master, width=1024, height=1024)
+        self.image_canvas.pack()
+
+    def generate_image(self):
+        prompt = self.prompt_entry.get()
+        size = self.size_entry.get()
+
+        url = 'https://api.openai.com/v1/images/generations'
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer api'
+        }
+
+        data = {
+            "prompt": prompt,
+            "n": 1,
+            "size": size
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+        image_data = response.json()['data'][0]['url']
+
+        response = requests.get(image_data)
+
+        with open("image.png", "wb") as f:
+            f.write(response.content)
+
+        self.image_canvas.image = tk.PhotoImage(file="image.png")
+        self.image_canvas.create_image(0, 0, anchor="nw", image=self.image_canvas.image)
+
+root = tk.Tk()
+app = OpenAIImageGeneratorApp(root)
+root.mainloop()
